@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ElectroStore — Electronics Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #1a1a24;
+  --bg4: #22222e;
+  --bg5: #2a2a38;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0f0f8;
+  --text2: #9898b0;
+  --text3: #5a5a70;
+  --accent: #6c63ff;
+  --accent2: #8b5cf6;
+  --accent3: #a78bfa;
+  --green: #10b981;
+  --green2: #059669;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --cyan: #06b6d4;
+  --pink: #ec4899;
+  --radius: 12px;
+  --radius2: 8px;
+  --radius3: 16px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --glow: 0 0 20px rgba(108,99,255,0.15);
+  --nav-h: 64px;
+  --header-h: 56px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.5;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:2px;}
+
+/* ── APP SHELL ── */
+#app{display:flex;flex-direction:column;height:100vh;max-width:430px;margin:0 auto;position:relative;overflow:hidden;}
+#header{height:var(--header-h);min-height:var(--header-h);display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:var(--bg);border-bottom:1px solid var(--border);z-index:100;position:relative;}
+#header h1{font-size:18px;font-weight:700;letter-spacing:-0.3px;}
+#header h1 span{color:var(--accent);}
+.header-actions{display:flex;align-items:center;gap:8px;}
+.icon-btn{width:36px;height:36px;border-radius:var(--radius2);border:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s;color:var(--text2);font-size:16px;}
+.icon-btn:active{transform:scale(0.93);background:var(--bg4);}
+
+#pages{flex:1;overflow:hidden;position:relative;}
+.page{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding-bottom:calc(var(--nav-h) + 16px);display:none;flex-direction:column;}
+.page.active{display:flex;}
+.page-content{flex:1;padding:12px 14px;}
+
+/* ── BOTTOM NAV ── */
+#nav{height:var(--nav-h);min-height:var(--nav-h);display:flex;align-items:center;background:var(--bg2);border-top:1px solid var(--border);position:relative;z-index:100;padding:0 4px;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:8px 4px;border-radius:var(--radius2);transition:all 0.15s;color:var(--text3);min-height:52px;}
+.nav-item.active{color:var(--accent);}
+.nav-item:active{background:var(--bg3);}
+.nav-icon{font-size:20px;line-height:1;}
+.nav-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);position:absolute;bottom:6px;left:50%;transform:translateX(-50%);opacity:0;}
+.nav-item.active .nav-dot{opacity:1;}
+
+/* ── SECTION HEADER ── */
+.sec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sec-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;}
+.sec-action{font-size:12px;color:var(--accent);font-weight:600;cursor:pointer;}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.kpi-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden;cursor:pointer;transition:all 0.2s;}
+.kpi-card:active{transform:scale(0.97);}
+.kpi-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;opacity:0.06;background:var(--kpi-color,var(--accent));transform:translate(20px,-20px);}
+.kpi-card .kpi-icon{font-size:20px;margin-bottom:6px;}
+.kpi-card .kpi-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:4px;}
+.kpi-card .kpi-value{font-size:18px;font-weight:700;letter-spacing:-0.5px;font-family:var(--mono);}
+.kpi-card .kpi-change{font-size:10px;margin-top:4px;display:flex;align-items:center;gap:3px;}
+.kpi-card .kpi-change.up{color:var(--green);}
+.kpi-card .kpi-change.down{color:var(--red);}
+
+/* ── CHART CARD ── */
+.chart-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.chart-card h3{font-size:13px;font-weight:600;margin-bottom:4px;}
+.chart-card p{font-size:11px;color:var(--text3);margin-bottom:12px;}
+.chart-wrap{height:140px;position:relative;}
+
+/* ── LIST ITEMS ── */
+.list-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;}
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);transition:background 0.15s;cursor:pointer;}
+.list-item:last-child{border-bottom:none;}
+.list-item:active{background:var(--bg4);}
+.list-avatar{width:38px;height:38px;border-radius:var(--radius2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.list-info{flex:1;min-width:0;}
+.list-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.list-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.list-right{text-align:right;flex-shrink:0;}
+.list-value{font-size:13px;font-weight:700;font-family:var(--mono);}
+.list-badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;margin-top:2px;display:inline-block;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:0.3px;}
+.badge-green{background:rgba(16,185,129,0.12);color:var(--green);}
+.badge-red{background:rgba(239,68,68,0.12);color:var(--red);}
+.badge-amber{background:rgba(245,158,11,0.12);color:var(--amber);}
+.badge-cyan{background:rgba(6,182,212,0.12);color:var(--cyan);}
+.badge-purple{background:rgba(108,99,255,0.12);color:var(--accent3);}
+
+/* ── SEARCH BAR ── */
+.search-wrap{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;height:40px;margin-bottom:12px;}
+.search-wrap input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13px;}
+.search-wrap input::placeholder{color:var(--text3);}
+.search-icon{font-size:15px;color:var(--text3);}
+
+/* ── FILTER CHIPS ── */
+.filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;scrollbar-width:none;}
+.filter-row::-webkit-scrollbar{display:none;}
+.chip{flex-shrink:0;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;color:var(--text2);}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* ── PRODUCT CARD GRID ── */
+.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.product-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;cursor:pointer;transition:all 0.2s;position:relative;}
+.product-card:active{transform:scale(0.97);border-color:var(--accent);}
+.product-emoji{font-size:28px;text-align:center;padding:8px 0;background:var(--bg4);border-radius:var(--radius2);margin-bottom:10px;}
+.product-name{font-size:12px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.product-brand{font-size:10px;color:var(--text3);margin-bottom:6px;}
+.product-price{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--accent3);}
+.product-stock{font-size:10px;color:var(--text3);margin-top:3px;}
+.stock-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:3px;}
+.stock-dot.green{background:var(--green);}
+.stock-dot.amber{background:var(--amber);}
+.stock-dot.red{background:var(--red);}
+
+/* ── POS / SALE ── */
+.pos-wrap{display:flex;flex-direction:column;height:100%;}
+.pos-items{flex:1;overflow-y:auto;}
+.pos-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3);margin-bottom:4px;border-radius:var(--radius2);}
+.pos-qty{display:flex;align-items:center;gap:8px;}
+.qty-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:var(--bg4);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700;color:var(--text);transition:all 0.1s;}
+.qty-btn:active{transform:scale(0.9);background:var(--accent);}
+.qty-num{font-size:14px;font-weight:700;min-width:20px;text-align:center;font-family:var(--mono);}
+.pos-footer{background:var(--bg2);border-top:1px solid var(--border);padding:14px;}
+.pos-totals{margin-bottom:12px;}
+.pos-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;}
+.pos-row.total{font-size:16px;font-weight:700;border-top:1px solid var(--border);padding-top:8px;margin-top:4px;}
+.pos-row.total .pos-amount{color:var(--accent3);font-family:var(--mono);}
+.pos-pay-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.pay-method{padding:8px;border-radius:var(--radius2);border:1px solid var(--border);background:var(--bg3);font-size:11px;font-weight:600;text-align:center;cursor:pointer;transition:all 0.15s;color:var(--text2);}
+.pay-method.selected{border-color:var(--accent);background:rgba(108,99,255,0.12);color:var(--accent3);}
+
+/* ── BUTTONS ── */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border-radius:var(--radius);border:none;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:active{background:var(--accent2);}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text);}
+.btn-danger{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);}
+.btn-success{background:var(--green);color:#fff;}
+.btn-full{width:100%;}
+
+/* ── MODAL / DRAWER ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-end;}
+.overlay.open{display:flex;}
+.drawer{background:var(--bg2);border-radius:20px 20px 0 0;border-top:1px solid var(--border);width:100%;max-height:90vh;overflow-y:auto;padding:0 0 24px;}
+.drawer-handle{width:36px;height:4px;background:var(--bg5);border-radius:2px;margin:12px auto 16px;}
+.drawer-header{padding:0 16px 16px;border-bottom:1px solid var(--border);}
+.drawer-header h2{font-size:16px;font-weight:700;}
+.drawer-body{padding:16px;}
+
+/* ── FORMS ── */
+.form-group{margin-bottom:14px;}
+.form-label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:block;}
+.form-input{width:100%;height:42px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:0 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border 0.15s;}
+.form-input:focus{border-color:var(--accent);}
+.form-input::placeholder{color:var(--text3);}
+.form-select{width:100%;height:42px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:0 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;appearance:none;}
+.form-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:10px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;resize:none;min-height:80px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* ── STAT ROW ── */
+.stat-row{display:flex;gap:8px;margin-bottom:10px;}
+.stat-pill{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px;text-align:center;}
+.stat-pill-val{font-size:16px;font-weight:700;font-family:var(--mono);}
+.stat-pill-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{margin-bottom:12px;}
+.progress-info{display:flex;justify-content:space-between;margin-bottom:5px;font-size:11px;}
+.progress-bar{height:4px;background:var(--bg5);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.5s ease;}
+
+/* ── TIMELINE / ACTIVITY ── */
+.activity-list{display:flex;flex-direction:column;gap:0;}
+.activity-item{display:flex;gap:12px;padding:10px 0;position:relative;}
+.activity-item::before{content:'';position:absolute;left:15px;top:32px;width:1px;height:calc(100% - 10px);background:var(--border);}
+.activity-item:last-child::before{display:none;}
+.activity-dot{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:2px solid var(--border);}
+.activity-content{flex:1;}
+.activity-title{font-size:12px;font-weight:600;}
+.activity-meta{font-size:10px;color:var(--text3);margin-top:2px;}
+
+/* ── REPORTS ── */
+.report-tabs{display:flex;gap:4px;background:var(--bg3);border-radius:var(--radius);padding:4px;margin-bottom:12px;}
+.report-tab{flex:1;text-align:center;padding:6px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;color:var(--text3);transition:all 0.15s;}
+.report-tab.active{background:var(--accent);color:#fff;}
+
+/* ── NOTIFICATION BADGE ── */
+.notif-badge{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--red);border-radius:50%;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;color:#fff;border:2px solid var(--bg);}
+
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3);}
+.empty-icon{font-size:40px;margin-bottom:12px;}
+.empty-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px;}
+.empty-sub{font-size:12px;}
+
+/* ── ROLE BADGE ── */
+.role-bar{display:flex;align-items:center;gap:8px;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:var(--radius2);padding:8px 12px;margin-bottom:14px;}
+.role-bar span:first-child{font-size:12px;color:var(--text3);}
+.role-bar span:last-child{font-size:12px;font-weight:700;color:var(--accent3);}
+
+/* ── ONBOARDING ── */
+#onboarding{position:fixed;inset:0;background:var(--bg);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;}
+.onboard-logo{font-size:56px;margin-bottom:24px;}
+.onboard-title{font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:8px;}
+.onboard-title span{color:var(--accent);}
+.onboard-sub{font-size:14px;color:var(--text2);margin-bottom:40px;line-height:1.7;}
+.role-cards{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;}
+.role-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius3);padding:16px;cursor:pointer;transition:all 0.2s;text-align:left;display:flex;align-items:center;gap:14px;}
+.role-card:active,.role-card:hover{border-color:var(--accent);background:rgba(108,99,255,0.08);}
+.role-card-icon{font-size:26px;width:48px;height:48px;background:var(--bg4);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.role-card-info h3{font-size:14px;font-weight:700;margin-bottom:3px;}
+.role-card-info p{font-size:11px;color:var(--text3);}
+
+/* ── SUCCESS TOAST ── */
+#toast{position:fixed;bottom:calc(var(--nav-h) + 12px);left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg4);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 20px;font-size:13px;font-weight:600;z-index:500;opacity:0;transition:all 0.3s;white-space:nowrap;pointer-events:none;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast.success{border-color:var(--green);color:var(--green);}
+#toast.error{border-color:var(--red);color:var(--red);}
+
+/* ── STOCK ALERT BANNER ── */
+.alert-banner{display:flex;align-items:center;gap:10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;}
+.alert-banner-icon{font-size:18px;}
+.alert-banner-text{font-size:12px;color:var(--amber);}
+
+/* ── PROFIT METER ── */
+.profit-meter{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+.profit-meter-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;}
+.profit-donut{width:100px;height:100px;margin:0 auto 12px;}
+.profit-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;}
+.p-stat-val{font-size:13px;font-weight:700;font-family:var(--mono);}
+.p-stat-lbl{font-size:9px;color:var(--text3);margin-top:1px;}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.page.active .page-content > *{animation:fadeIn 0.25s ease both;}
+.page.active .page-content > *:nth-child(2){animation-delay:0.04s;}
+.page.active .page-content > *:nth-child(3){animation-delay:0.08s;}
+.page.active .page-content > *:nth-child(4){animation-delay:0.12s;}
+.page.active .page-content > *:nth-child(5){animation-delay:0.16s;}
+.drawer{animation:slideUp 0.25s ease;}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboarding">
+  <div class="onboard-logo">⚡</div>
+  <h1 class="onboard-title">Electro<span>Store</span></h1>
+  <p class="onboard-sub">Enterprise Electronics Management<br>Powered by Telegram · Built for Ethiopia</p>
+  <div class="role-cards">
+    <div class="role-card" onclick="selectRole('Super Admin','👑')">
+      <div class="role-card-icon">👑</div>
+      <div class="role-card-info">
+        <h3>Super Admin</h3>
+        <p>Full system access · Financial management</p>
+      </div>
+    </div>
+    <div class="role-card" onclick="selectRole('Manager','📊')">
+      <div class="role-card-icon">📊</div>
+      <div class="role-card-info">
+        <h3>Manager</h3>
+        <p>Inventory · Sales · Reports · Customers</p>
+      </div>
+    </div>
+    <div class="role-card" onclick="selectRole('Staff','🛍️')">
+      <div class="role-card-icon">🛍️</div>
+      <div class="role-card-info">
+        <h3>Staff</h3>
+        <p>POS · Product search · Customer support</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none;">
+  <!-- HEADER -->
+  <div id="header">
+    <h1>⚡ Electro<span>Store</span></h1>
+    <div class="header-actions">
+      <div class="icon-btn" onclick="openNotifications()" style="position:relative;" title="Notifications">
+        🔔
+        <div class="notif-badge" id="notif-badge">3</div>
+      </div>
+      <div class="icon-btn" onclick="openProfile()" title="Profile">👤</div>
+    </div>
+  </div>
+
+  <!-- PAGES -->
+  <div id="pages">
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-content">
+        <div class="role-bar">
+          <span>Logged in as</span>
+          <span id="role-display">Super Admin</span>
+        </div>
+
+        <!-- Stock Alert Banner -->
+        <div class="alert-banner">
+          <div class="alert-banner-icon">⚠️</div>
+          <div class="alert-banner-text">5 products are low on stock · 2 out of stock</div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="sec-header"><span class="sec-title">Overview</span><span class="sec-action" onclick="showPage('reports')">Full Report →</span></div>
+        <div class="kpi-grid">
+          <div class="kpi-card" style="--kpi-color:var(--accent)">
+            <div class="kpi-icon">💰</div>
+            <div class="kpi-label">Total Capital</div>
+            <div class="kpi-value">ETB 2.4M</div>
+            <div class="kpi-change up">▲ 8.2% this month</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:var(--green)">
+            <div class="kpi-icon">📈</div>
+            <div class="kpi-label">Revenue (MTD)</div>
+            <div class="kpi-value">ETB 487K</div>
+            <div class="kpi-change up">▲ 12.5% vs last month</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:var(--cyan)">
+            <div class="kpi-icon">📦</div>
+            <div class="kpi-label">Inventory Value</div>
+            <div class="kpi-value">ETB 1.8M</div>
+            <div class="kpi-change up">▲ 3.1% this week</div>
+          </div>
+          <div class="kpi-card" style="--kpi-color:var(--amber)">
+            <div class="kpi-icon">💸</div>
+            <div class="kpi-label">Net Profit</div>
+            <div class="kpi-value">ETB 124K</div>
+            <div class="kpi-change down">▼ 2.3% vs last month</div>
+          </div>
+        </div>
+
+        <!-- Revenue Chart -->
+        <div class="chart-card">
+          <h3>Revenue Trend</h3>
+          <p>Last 7 days · Ethiopian Birr (ETB)</p>
+          <div class="chart-wrap"><canvas id="revChart"></canvas></div>
+        </div>
+
+        <!-- Profit Breakdown -->
+        <div class="profit-meter">
+          <div class="profit-meter-label">Financial Breakdown</div>
+          <canvas id="donutChart" width="100" height="100" class="profit-donut"></canvas>
+          <div class="profit-stats">
+            <div><div class="p-stat-val" style="color:var(--green)">ETB 487K</div><div class="p-stat-lbl">Revenue</div></div>
+            <div><div class="p-stat-val" style="color:var(--red)">ETB 363K</div><div class="p-stat-lbl">Expenses</div></div>
+            <div><div class="p-stat-val" style="color:var(--accent3)">ETB 124K</div><div class="p-stat-lbl">Profit</div></div>
+          </div>
+        </div>
+
+        <!-- Top Selling -->
+        <div class="sec-header"><span class="sec-title">Top Selling</span></div>
+        <div class="list-card">
+          <div id="top-selling-list"></div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="sec-header"><span class="sec-title">Recent Activity</span></div>
+        <div class="activity-list" id="activity-list"></div>
+      </div>
+    </div>
+
+    <!-- INVENTORY PAGE -->
+    <div class="page" id="page-inventory">
+      <div class="page-content">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search products, SKU, brand..." id="inv-search" oninput="filterProducts()">
+        </div>
+        <div class="filter-row" id="cat-filters">
+          <div class="chip active" onclick="filterCat(this,'All')">All</div>
+          <div class="chip" onclick="filterCat(this,'Smartphones')">📱 Phones</div>
+          <div class="chip" onclick="filterCat(this,'Laptops')">💻 Laptops</div>
+          <div class="chip" onclick="filterCat(this,'Tablets')">📲 Tablets</div>
+          <div class="chip" onclick="filterCat(this,'Accessories')">🎧 Accessories</div>
+          <div class="chip" onclick="filterCat(this,'Chargers')">🔌 Chargers</div>
+          <div class="chip" onclick="filterCat(this,'Power Banks')">🔋 Power Banks</div>
+          <div class="chip" onclick="filterCat(this,'Smart Watches')">⌚ Watches</div>
+          <div class="chip" onclick="filterCat(this,'Networking')">📡 Networking</div>
+          <div class="chip" onclick="filterCat(this,'Gaming')">🎮 Gaming</div>
+        </div>
+
+        <div class="sec-header">
+          <span class="sec-title" id="inv-count">All Products (12)</span>
+          <span class="sec-action" onclick="openAddProduct()">+ Add Product</span>
+        </div>
+
+        <div class="product-grid" id="product-grid"></div>
+      </div>
+    </div>
+
+    <!-- POS / SALES PAGE -->
+    <div class="page" id="page-sales">
+      <div class="page-content" style="padding-bottom:0;">
+        <div class="sec-header">
+          <span class="sec-title">Point of Sale</span>
+          <span class="sec-action" onclick="showSalesHistory()">History</span>
+        </div>
+        <div class="search-wrap" style="margin-bottom:10px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search products to add..." id="pos-search" oninput="filterPOS()">
+        </div>
+        <div id="pos-quick-add" class="filter-row"></div>
+      </div>
+
+      <div id="cart-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="padding:0 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">
+          <span class="sec-title">Cart (<span id="cart-count">0</span> items)</span>
+          <span class="sec-action" onclick="clearCart()" style="color:var(--red)">Clear</span>
+        </div>
+        <div id="cart-items" style="flex:1;overflow-y:auto;padding:0 14px;"></div>
+
+        <div class="pos-footer">
+          <div class="pos-totals">
+            <div class="pos-row"><span>Subtotal</span><span id="pos-subtotal" class="pos-amount" style="font-family:var(--mono)">ETB 0</span></div>
+            <div class="pos-row"><span>Discount</span>
+              <span style="display:flex;align-items:center;gap:6px;">
+                <input type="number" id="discount-input" style="width:50px;height:24px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:0 6px;color:var(--text);font-size:11px;text-align:center;" value="0" min="0" max="100" oninput="updateTotals()">
+                <span style="font-size:11px;color:var(--text3);">%</span>
+              </span>
+            </div>
+            <div class="pos-row"><span>Tax (15% VAT)</span><span id="pos-tax" style="font-family:var(--mono)">ETB 0</span></div>
+            <div class="pos-row total"><strong>Total</strong><span id="pos-total" class="pos-amount">ETB 0</span></div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <div class="form-label">Payment Method</div>
+            <div class="pos-pay-btns">
+              <div class="pay-method selected" onclick="selectPay(this)">💵 Cash</div>
+              <div class="pay-method" onclick="selectPay(this)">📱 Telebirr</div>
+              <div class="pay-method" onclick="selectPay(this)">🏦 CBE Birr</div>
+              <div class="pay-method" onclick="selectPay(this)">💳 Chapa</div>
+              <div class="pay-method" onclick="selectPay(this)">🔄 Bank Transfer</div>
+              <div class="pay-method" onclick="selectPay(this)">📝 Credit</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline" style="flex:1;font-size:12px;" onclick="holdSale()">⏸ Hold</button>
+            <button class="btn btn-success" style="flex:2;" onclick="completeSale()">✅ Complete Sale</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS PAGE -->
+    <div class="page" id="page-reports">
+      <div class="page-content">
+        <div class="report-tabs">
+          <div class="report-tab active" onclick="switchReport(this,'daily')">Daily</div>
+          <div class="report-tab" onclick="switchReport(this,'weekly')">Weekly</div>
+          <div class="report-tab" onclick="switchReport(this,'monthly')">Monthly</div>
+          <div class="report-tab" onclick="switchReport(this,'yearly')">Yearly</div>
+        </div>
+
+        <div class="stat-row">
+          <div class="stat-pill"><div class="stat-pill-val" style="color:var(--green)" id="rep-revenue">ETB 24,500</div><div class="stat-pill-lbl">Revenue</div></div>
+          <div class="stat-pill"><div class="stat-pill-val" style="color:var(--red)" id="rep-expense">ETB 8,200</div><div class="stat-pill-lbl">Expenses</div></div>
+          <div class="stat-pill"><div class="stat-pill-val" style="color:var(--accent3)" id="rep-profit">ETB 16,300</div><div class="stat-pill-lbl">Net Profit</div></div>
+        </div>
+
+        <div class="chart-card">
+          <h3>Sales vs Expenses</h3>
+          <p id="rep-period">Today · June 4, 2026</p>
+          <div class="chart-wrap"><canvas id="repChart"></canvas></div>
+        </div>
+
+        <!-- Expense Breakdown -->
+        <div class="sec-header"><span class="sec-title">Expense Breakdown</span></div>
+        <div id="expense-breakdown"></div>
+
+        <!-- Sales by Category -->
+        <div class="sec-header" style="margin-top:8px;"><span class="sec-title">Sales by Category</span></div>
+        <div class="chart-card">
+          <div class="chart-wrap" style="height:160px;"><canvas id="catChart"></canvas></div>
+        </div>
+
+        <!-- Export Buttons -->
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-outline" style="flex:1;font-size:12px;" onclick="showToast('📄 PDF export ready!','success')">📄 PDF</button>
+          <button class="btn btn-outline" style="flex:1;font-size:12px;" onclick="showToast('📊 Excel export ready!','success')">📊 Excel</button>
+          <button class="btn btn-outline" style="flex:1;font-size:12px;" onclick="showToast('📋 CSV export ready!','success')">📋 CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MORE PAGE -->
+    <div class="page" id="page-more">
+      <div class="page-content">
+        <div class="list-card" style="margin-bottom:10px;">
+          <div class="list-item" onclick="openSection('customers')">
+            <div class="list-avatar" style="background:rgba(6,182,212,0.12);font-size:20px;">👥</div>
+            <div class="list-info"><div class="list-title">Customers</div><div class="list-sub">148 total · 12 VIP</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+          <div class="list-item" onclick="openSection('suppliers')">
+            <div class="list-avatar" style="background:rgba(16,185,129,0.12);font-size:20px;">🏭</div>
+            <div class="list-info"><div class="list-title">Suppliers</div><div class="list-sub">24 active suppliers</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+          <div class="list-item" onclick="openSection('purchases')">
+            <div class="list-avatar" style="background:rgba(245,158,11,0.12);font-size:20px;">🛒</div>
+            <div class="list-info"><div class="list-title">Purchases</div><div class="list-sub">32 orders this month</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+          <div class="list-item" onclick="openSection('expenses')">
+            <div class="list-avatar" style="background:rgba(239,68,68,0.12);font-size:20px;">💸</div>
+            <div class="list-info"><div class="list-title">Expenses</div><div class="list-sub">ETB 363K this month</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+          <div class="list-item" onclick="openSection('stock')">
+            <div class="list-avatar" style="background:rgba(108,99,255,0.12);font-size:20px;">📦</div>
+            <div class="list-info"><div class="list-title">Stock Management</div><div class="list-sub">5 low stock alerts</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+        </div>
+
+        <div class="list-card" style="margin-bottom:10px;">
+          <div class="list-item" onclick="openSection('branches')">
+            <div class="list-avatar" style="background:rgba(108,99,255,0.08);font-size:20px;">🏪</div>
+            <div class="list-info"><div class="list-title">Branches</div><div class="list-sub">3 active branches</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+          <div class="list-item" onclick="openSection('warranty')">
+            <div class="list-avatar" style="background:rgba(6,182,212,0.08);font-size:20px;">🛡️</div>
+            <div class="list-info"><div class="list-title">Warranty Claims</div><div class="list-sub">7 open claims</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+          <div class="list-item" onclick="openSection('returns')">
+            <div class="list-avatar" style="background:rgba(245,158,11,0.08);font-size:20px;">↩️</div>
+            <div class="list-info"><div class="list-title">Returns & Refunds</div><div class="list-sub">3 pending returns</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+          <div class="list-item" onclick="openSection('audit')">
+            <div class="list-avatar" style="background:rgba(16,185,129,0.08);font-size:20px;">🔍</div>
+            <div class="list-info"><div class="list-title">Audit Logs</div><div class="list-sub">Full activity trail</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+        </div>
+
+        <div class="list-card">
+          <div class="list-item" onclick="openSection('ai')">
+            <div class="list-avatar" style="background:rgba(168,139,250,0.12);font-size:20px;">🤖</div>
+            <div class="list-info"><div class="list-title">AI Insights</div><div class="list-sub">Forecasting · Predictions</div></div>
+            <span class="badge badge-purple">BETA</span>
+          </div>
+          <div class="list-item" onclick="openSection('settings')">
+            <div class="list-avatar" style="background:rgba(255,255,255,0.06);font-size:20px;">⚙️</div>
+            <div class="list-info"><div class="list-title">Settings</div><div class="list-sub">Store config · Tax · Users</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- BOTTOM NAV -->
+  <nav id="nav">
+    <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">Home</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="showPage('inventory')" id="nav-inventory">
+      <div class="nav-icon">📦</div>
+      <div class="nav-label">Inventory</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="showPage('sales')" id="nav-sales">
+      <div class="nav-icon">🛍️</div>
+      <div class="nav-label">POS</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="showPage('reports')" id="nav-reports">
+      <div class="nav-icon">📊</div>
+      <div class="nav-label">Reports</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" onclick="showPage('more')" id="nav-more">
+      <div class="nav-icon">☰</div>
+      <div class="nav-label">More</div>
+      <div class="nav-dot"></div>
+    </div>
+  </nav>
+</div><!-- /app -->
+
+<!-- OVERLAYS / DRAWERS -->
+
+<!-- Product Detail Drawer -->
+<div class="overlay" id="product-drawer" onclick="if(event.target===this)closeDrawer('product-drawer')">
+  <div class="drawer" style="max-height:85vh;">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2 id="drawer-product-name">Product Name</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="icon-btn" onclick="editProduct()">✏️</button>
+          <button class="icon-btn" onclick="closeDrawer('product-drawer')" style="color:var(--red)">✕</button>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-body" id="drawer-product-body"></div>
+  </div>
+</div>
+
+<!-- Add Product Drawer -->
+<div class="overlay" id="add-product-drawer" onclick="if(event.target===this)closeDrawer('add-product-drawer')">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2>Add New Product</h2>
+        <button class="icon-btn" onclick="closeDrawer('add-product-drawer')" style="color:var(--red)">✕</button>
+      </div>
+    </div>
+    <div class="drawer-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Product Name *</label>
+          <input class="form-input" id="new-name" placeholder="e.g. Samsung Galaxy S24">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Brand *</label>
+          <input class="form-input" id="new-brand" placeholder="e.g. Samsung">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        <select class="form-select" id="new-cat">
+          <option>Smartphones</option><option>Laptops</option><option>Tablets</option>
+          <option>Accessories</option><option>Chargers</option><option>Power Banks</option>
+          <option>Headphones</option><option>Smart Watches</option><option>Networking</option>
+          <option>Gaming</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Purchase Price (ETB)</label>
+          <input class="form-input" id="new-buy" type="number" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Selling Price (ETB)</label>
+          <input class="form-input" id="new-sell" type="number" placeholder="0.00">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Quantity</label>
+          <input class="form-input" id="new-qty" type="number" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Min Stock Level</label>
+          <input class="form-input" id="new-min" type="number" placeholder="5">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">SKU</label>
+          <input class="form-input" id="new-sku" placeholder="AUTO-GENERATED">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Warranty</label>
+          <input class="form-input" id="new-warranty" placeholder="e.g. 1 Year">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Supplier</label>
+        <select class="form-select" id="new-supplier">
+          <option>TechTrade Ethiopia</option><option>Addis Electronics</option>
+          <option>Global Gadgets PLC</option><option>DigiMart Ethiopia</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-textarea" id="new-desc" placeholder="Product description..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;">
+        <button class="btn btn-outline btn-full" onclick="closeDrawer('add-product-drawer')">Cancel</button>
+        <button class="btn btn-primary btn-full" onclick="saveProduct()">💾 Save Product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section Drawer -->
+<div class="overlay" id="section-drawer" onclick="if(event.target===this)closeDrawer('section-drawer')">
+  <div class="drawer" style="max-height:90vh;">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2 id="section-title">Section</h2>
+        <button class="icon-btn" onclick="closeDrawer('section-drawer')" style="color:var(--red)">✕</button>
+      </div>
+    </div>
+    <div class="drawer-body" id="section-body"></div>
+  </div>
+</div>
+
+<!-- Notifications Drawer -->
+<div class="overlay" id="notif-drawer" onclick="if(event.target===this)closeDrawer('notif-drawer')">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2>Notifications</h2>
+        <span style="font-size:12px;color:var(--accent);cursor:pointer;" onclick="markAllRead()">Mark all read</span>
+      </div>
+    </div>
+    <div class="drawer-body" id="notif-list"></div>
+  </div>
+</div>
+
+<!-- Profile Drawer -->
+<div class="overlay" id="profile-drawer" onclick="if(event.target===this)closeDrawer('profile-drawer')">
+  <div class="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-body">
+      <div style="text-align:center;padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:16px;">
+        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;">👤</div>
+        <div style="font-size:18px;font-weight:700;" id="profile-name">Abebe Girma</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px;" id="profile-role">Super Admin · ElectroStore Addis</div>
+        <div style="margin-top:8px;" id="profile-badge"></div>
+      </div>
+      <div class="list-card" style="margin-bottom:12px;">
+        <div class="list-item" onclick="showToast('Feature coming soon','')">
+          <span style="font-size:18px;">🔔</span>
+          <div class="list-info"><div class="list-title">Notification Settings</div></div>
+          <div style="color:var(--text3)">›</div>
+        </div>
+        <div class="list-item" onclick="showToast('Feature coming soon','')">
+          <span style="font-size:18px;">🌐</span>
+          <div class="list-info"><div class="list-title">Language / አማርኛ</div></div>
+          <div style="color:var(--text3)">›</div>
+        </div>
+        <div class="list-item" onclick="showToast('Feature coming soon','')">
+          <span style="font-size:18px;">🔐</span>
+          <div class="list-info"><div class="list-title">Security & Sessions</div></div>
+          <div style="color:var(--text3)">›</div>
+        </div>
+      </div>
+      <button class="btn btn-danger btn-full" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Modal -->
+<div class="overlay" id="invoice-modal" onclick="if(event.target===this)closeDrawer('invoice-modal')">
+  <div class="drawer" style="max-height:80vh;">
+    <div class="drawer-handle"></div>
+    <div class="drawer-body" id="invoice-body"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const state = {
+  role: 'Super Admin',
+  roleIcon: '👑',
+  currentPage: 'dashboard',
+  cart: [],
+  selectedPayment: 'Cash',
+  currentCategory: 'All',
+  products: [
+    {id:1,name:'Samsung Galaxy S24 Ultra',brand:'Samsung',cat:'Smartphones',emoji:'📱',sku:'SGS24U-001',buy:55000,sell:72000,qty:18,min:5,warranty:'1 Year',supplier:'TechTrade Ethiopia',status:'active',serials:['SN001','SN002'],desc:'Latest flagship with 200MP camera'},
+    {id:2,name:'iPhone 15 Pro Max',brand:'Apple',cat:'Smartphones',emoji:'📱',sku:'IP15PM-001',buy:90000,sell:118000,qty:9,min:5,warranty:'1 Year',supplier:'Global Gadgets PLC',status:'active',serials:['SN010'],desc:'A17 Pro chip, titanium design'},
+    {id:3,name:'MacBook Pro M3',brand:'Apple',cat:'Laptops',emoji:'💻',sku:'MBP-M3-001',buy:140000,sell:175000,qty:6,min:3,warranty:'1 Year',supplier:'Global Gadgets PLC',status:'active',serials:[],desc:'M3 Pro chip, 18-hour battery'},
+    {id:4,name:'Dell XPS 15',brand:'Dell',cat:'Laptops',emoji:'💻',sku:'DXPS15-001',buy:85000,sell:108000,qty:4,min:3,warranty:'1 Year',supplier:'Addis Electronics',status:'active',serials:[],desc:'OLED display, 13th Gen Intel'},
+    {id:5,name:'iPad Pro 12.9"',brand:'Apple',cat:'Tablets',emoji:'📲',sku:'IPADP12-001',buy:70000,sell:88000,qty:11,min:4,warranty:'1 Year',supplier:'Global Gadgets PLC',status:'active',serials:[],desc:'M2 chip, Liquid Retina XDR'},
+    {id:6,name:'Sony WH-1000XM5',brand:'Sony',cat:'Accessories',emoji:'🎧',sku:'SWHXM5-001',buy:12000,sell:17500,qty:22,min:8,warranty:'1 Year',supplier:'DigiMart Ethiopia',status:'active',serials:[],desc:'Industry-leading noise canceling'},
+    {id:7,name:'Anker PowerCore 26800',brand:'Anker',cat:'Power Banks',emoji:'🔋',sku:'APC26800-001',buy:2800,sell:4200,qty:35,min:10,warranty:'18 Months',supplier:'TechTrade Ethiopia',status:'active',serials:[],desc:'26800mAh, 65W fast charging'},
+    {id:8,name:'Apple Watch Ultra 2',brand:'Apple',cat:'Smart Watches',emoji:'⌚',sku:'AWU2-001',buy:55000,sell:72000,qty:7,min:3,warranty:'1 Year',supplier:'Global Gadgets PLC',status:'active',serials:[],desc:'Titanium case, precision GPS'},
+    {id:9,name:'Samsung 65" QLED TV',brand:'Samsung',cat:'Other Electronics',emoji:'📺',sku:'SQ65-001',buy:68000,sell:89000,qty:3,min:2,warranty:'2 Years',supplier:'Addis Electronics',status:'active',serials:[],desc:'4K QLED, 120Hz, Smart TV'},
+    {id:10,name:'TP-Link AX6000 Router',brand:'TP-Link',cat:'Networking',emoji:'📡',sku:'TPAX6000-001',buy:8500,sell:12000,qty:14,min:5,warranty:'2 Years',supplier:'TechTrade Ethiopia',status:'active',serials:[],desc:'WiFi 6E, 6000Mbps, 8 antennas'},
+    {id:11,name:'GaN 100W Charger',brand:'Baseus',cat:'Chargers',emoji:'🔌',sku:'BG100W-001',buy:1200,sell:1900,qty:2,min:8,warranty:'1 Year',supplier:'DigiMart Ethiopia',status:'active',serials:[],desc:'4-port GaN charger, PD 3.0',lowStock:true},
+    {id:12,name:'PlayStation 5',brand:'Sony',cat:'Gaming',emoji:'🎮',sku:'PS5-001',buy:55000,sell:68000,qty:0,min:3,warranty:'1 Year',supplier:'Global Gadgets PLC',status:'active',serials:[],desc:'Next-gen gaming console',outOfStock:true},
+  ],
+  customers: [
+    {id:1,name:'Abebech Tadesse',phone:'+251 911 234 567',balance:0,tier:'VIP',purchases:24,totalSpent:285000},
+    {id:2,name:'Dawit Bekele',phone:'+251 922 345 678',balance:5000,tier:'Regular',purchases:8,totalSpent:42000},
+    {id:3,name:'Hana Getachew',phone:'+251 933 456 789',balance:0,tier:'VIP',purchases:31,totalSpent:520000},
+    {id:4,name:'Yonas Alemu',phone:'+251 944 567 890',balance:12000,tier:'Regular',purchases:5,totalSpent:18500},
+    {id:5,name:'Selam Tesfaye',phone:'+251 955 678 901',balance:0,tier:'Regular',purchases:3,totalSpent:9200},
+  ],
+  suppliers: [
+    {id:1,name:'TechTrade Ethiopia',contact:'Tewodros H.',phone:'+251 911 100 200',products:45,balance:0,rating:4.8},
+    {id:2,name:'Global Gadgets PLC',contact:'Sara M.',phone:'+251 922 200 300',products:38,balance:28000,rating:4.6},
+    {id:3,name:'Addis Electronics',contact:'Kebede A.',phone:'+251 933 300 400',products:22,balance:0,rating:4.2},
+    {id:4,name:'DigiMart Ethiopia',contact:'Liya B.',phone:'+251 944 400 500',products:16,balance:8500,rating:4.5},
+  ],
+  expenses: [
+    {id:1,cat:'Rent',amount:25000,date:'2026-06-01',note:'Monthly office rent - Bole'},
+    {id:2,cat:'Salary',amount:180000,date:'2026-06-01',note:'Staff salary - June 2026'},
+    {id:3,cat:'Utilities',amount:8500,date:'2026-06-02',note:'Electricity & water'},
+    {id:4,cat:'Marketing',amount:15000,date:'2026-06-03',note:'Social media & flyers'},
+    {id:5,cat:'Transportation',amount:4200,date:'2026-06-03',note:'Delivery costs'},
+  ],
+  salesHistory: [
+    {id:'INV-2026-0341',date:'2026-06-04',customer:'Abebech Tadesse',total:72000,items:1,method:'Telebirr'},
+    {id:'INV-2026-0340',date:'2026-06-04',customer:'Walk-in Customer',total:17500,items:1,method:'Cash'},
+    {id:'INV-2026-0339',date:'2026-06-03',customer:'Dawit Bekele',total:4200,items:2,method:'Cash'},
+    {id:'INV-2026-0338',date:'2026-06-03',customer:'Hana Getachew',total:175000,items:1,method:'CBE Birr'},
+  ],
+  notifications: [
+    {id:1,type:'warning',icon:'⚠️',title:'Low Stock Alert',msg:'GaN 100W Charger — only 2 left',time:'5 min ago',read:false},
+    {id:2,type:'error',icon:'🚨',title:'Out of Stock',msg:'PlayStation 5 is out of stock',time:'1 hr ago',read:false},
+    {id:3,type:'success',icon:'✅',title:'Sale Completed',msg:'INV-2026-0341 · ETB 72,000',time:'2 hrs ago',read:false},
+    {id:4,type:'info',icon:'📦',title:'Purchase Received',msg:'50 units from TechTrade Ethiopia',time:'Yesterday',read:true},
+    {id:5,type:'info',icon:'🤖',title:'AI Insight',msg:'Galaxy S24 demand up 34% next week',time:'Yesterday',read:true},
+  ],
+  branches: [
+    {name:'Bole Main Branch',city:'Addis Ababa',manager:'Abebe G.',sales:245000,stock:580},
+    {name:'Piassa Branch',city:'Addis Ababa',manager:'Meron T.',sales:128000,stock:310},
+    {name:'Merkato Branch',city:'Addis Ababa',manager:'Yohannes D.',sales:94000,stock:240},
+  ],
+  auditLog: [
+    {user:'Abebe G.',action:'Completed Sale INV-2026-0341',time:'5 min ago',type:'sale'},
+    {user:'Meron T.',action:'Added product: AirPods Pro 2',time:'1 hr ago',type:'product'},
+    {user:'Abebe G.',action:'Adjusted stock: Galaxy S24 +10',time:'3 hrs ago',type:'stock'},
+    {user:'Yohannes D.',action:'Created purchase order PO-2026-089',time:'Yesterday',type:'purchase'},
+    {user:'System',action:'Generated monthly report - May 2026',time:'Yesterday',type:'report'},
+  ],
+  currentProduct: null,
+  invoiceCounter: 342,
+};
+
+// ─── FORMAT CURRENCY ──────────────────────────────────────────────────────────
+const etb = n => 'ETB ' + Math.round(n).toLocaleString();
+
+// ─── ONBOARDING ───────────────────────────────────────────────────────────────
+function selectRole(role, icon) {
+  state.role = role;
+  state.roleIcon = icon;
+  document.getElementById('onboarding').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('role-display').textContent = role;
+  document.getElementById('profile-role').textContent = role + ' · ElectroStore Addis';
+  document.getElementById('profile-badge').innerHTML = `<span class="badge badge-purple">${icon} ${role}</span>`;
+  initCharts();
+  renderDashboard();
+  renderProducts();
+  renderPOS();
+  renderReports();
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  state.currentPage = name;
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────────────────────
+let revChart, donutChart, repChart, catChart;
+
+function chartDefaults() {
+  Chart.defaults.color = '#9898b0';
+  Chart.defaults.font.family = 'DM Sans, sans-serif';
+  Chart.defaults.font.size = 10;
+}
+
+function initCharts() {
+  chartDefaults();
+  const grad1 = (ctx) => {
+    const g = ctx.chart.ctx.createLinearGradient(0,0,0,140);
+    g.addColorStop(0,'rgba(108,99,255,0.3)');
+    g.addColorStop(1,'rgba(108,99,255,0)');
+    return g;
+  };
+  // Revenue Chart
+  revChart = new Chart(document.getElementById('revChart'), {
+    type: 'line',
+    data: {
+      labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [{
+        data: [42000,38000,55000,61000,48000,72000,58000],
+        borderColor: '#6c63ff',
+        backgroundColor: function(ctx){return grad1(ctx);},
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: '#6c63ff',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => etb(ctx.raw) }
+      }},
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }},
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, ticks: { callback: v => v>=1000?Math.round(v/1000)+'K':v }}
+      }
+    }
+  });
+
+  // Donut
+  donutChart = new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [487000, 363000],
+        backgroundColor: ['#10b981','#ef4444'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: false, cutout: '72%',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => etb(ctx.raw) }}}
+    }
+  });
+
+  // Reports Chart
+  repChart = new Chart(document.getElementById('repChart'), {
+    type: 'bar',
+    data: {
+      labels: ['8am','10am','12pm','2pm','4pm','6pm','8pm'],
+      datasets: [
+        { label: 'Revenue', data: [4200,6800,3200,5100,2800,1900,500], backgroundColor: 'rgba(108,99,255,0.7)', borderRadius: 4 },
+        { label: 'Expenses', data: [1200,800,1100,900,700,600,100], backgroundColor: 'rgba(239,68,68,0.5)', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 }},
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + etb(ctx.raw) }}
+      },
+      scales: {
+        x: { grid: { display: false }, border: { display: false }},
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, border: { display: false }, ticks: { callback: v => v>=1000?Math.round(v/1000)+'K':v }}
+      }
+    }
+  });
+
+  // Category Pie
+  catChart = new Chart(document.getElementById('catChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Phones','Laptops','Tablets','Accessories','Other'],
+      datasets: [{
+        data: [38, 24, 14, 16, 8],
+        backgroundColor: ['#6c63ff','#10b981','#06b6d4','#f59e0b','#ec4899'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 10, padding: 10, font: { size: 10 }}},
+        tooltip: { callbacks: { label: ctx => ctx.label + ': ' + ctx.raw + '%' }}
+      }
+    }
+  });
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  // Top selling
+  const topSelling = [
+    {name:'Samsung Galaxy S24 Ultra',cat:'Smartphones',emoji:'📱',sold:48,revenue:3456000},
+    {name:'iPhone 15 Pro Max',cat:'Smartphones',emoji:'📱',sold:31,revenue:3658000},
+    {name:'Sony WH-1000XM5',cat:'Accessories',emoji:'🎧',sold:29,revenue:507500},
+    {name:'MacBook Pro M3',cat:'Laptops',emoji:'💻',sold:12,revenue:2100000},
+  ];
+  document.getElementById('top-selling-list').innerHTML = topSelling.map((p,i) => `
+    <div class="list-item">
+      <div class="list-avatar" style="background:var(--bg4);font-size:20px;">${p.emoji}</div>
+      <div class="list-info">
+        <div class="list-title">${p.name}</div>
+        <div class="list-sub">${p.cat} · ${p.sold} units sold</div>
+      </div>
+      <div class="list-right">
+        <div class="list-value" style="font-size:12px;">${etb(p.revenue)}</div>
+        <div style="font-size:10px;color:var(--text3);">#${i+1}</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Activity
+  const acts = [
+    {icon:'🛍️',bg:'rgba(108,99,255,0.15)',title:'Sale completed · INV-2026-0341',meta:'Abebech Tadesse · ETB 72,000 · Telebirr · 5m ago'},
+    {icon:'⚠️',bg:'rgba(245,158,11,0.15)',title:'Low stock alert · GaN 100W Charger',meta:'Only 2 units remaining · Auto-notified · 1h ago'},
+    {icon:'📦',bg:'rgba(16,185,129,0.15)',title:'Stock received · TechTrade Ethiopia',meta:'50x Anker PowerCore · PO-2026-088 · 2h ago'},
+    {icon:'💸',bg:'rgba(239,68,68,0.15)',title:'Expense recorded · Salary',meta:'ETB 180,000 · June 2026 payroll · Today'},
+    {icon:'👤',bg:'rgba(6,182,212,0.15)',title:'New customer registered',meta:'Selam Tesfaye · +251 955 678 901 · Today'},
+  ];
+  document.getElementById('activity-list').innerHTML = acts.map(a => `
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${a.bg};">${a.icon}</div>
+      <div class="activity-content">
+        <div class="activity-title">${a.title}</div>
+        <div class="activity-meta">${a.meta}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── INVENTORY ────────────────────────────────────────────────────────────────
+let filteredProducts = [...state.products];
+
+function renderProducts() {
+  const grid = document.getElementById('product-grid');
+  grid.innerHTML = filteredProducts.map(p => {
+    let stockBadge = '';
+    if(p.outOfStock) stockBadge = `<span class="stock-dot red"></span><span style="color:var(--red)">Out of stock</span>`;
+    else if(p.lowStock || p.qty <= p.min) stockBadge = `<span class="stock-dot amber"></span><span style="color:var(--amber)">Low stock</span>`;
+    else stockBadge = `<span class="stock-dot green"></span><span style="color:var(--text3)">${p.qty} in stock</span>`;
+    return `
+      <div class="product-card" onclick="openProduct(${p.id})">
+        <div class="product-emoji">${p.emoji}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-brand">${p.brand} · ${p.cat}</div>
+        <div class="product-price">${etb(p.sell)}</div>
+        <div class="product-stock">${stockBadge}</div>
+      </div>`;
+  }).join('');
+  document.getElementById('inv-count').textContent = `${state.currentCategory === 'All' ? 'All' : state.currentCategory} (${filteredProducts.length})`;
+}
+
+function filterCat(el, cat) {
+  state.currentCategory = cat;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  filterProducts();
+}
+
+function filterProducts() {
+  const q = (document.getElementById('inv-search').value || '').toLowerCase();
+  filteredProducts = state.products.filter(p => {
+    const catOk = state.currentCategory === 'All' || p.cat === state.currentCategory || p.cat.includes(state.currentCategory);
+    const searchOk = !q || p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+    return catOk && searchOk;
+  });
+  renderProducts();
+}
+
+function openProduct(id) {
+  const p = state.products.find(x => x.id === id);
+  state.currentProduct = p;
+  document.getElementById('drawer-product-name').textContent = p.name;
+  const margin = Math.round(((p.sell - p.buy) / p.buy) * 100);
+  document.getElementById('drawer-product-body').innerHTML = `
+    <div style="text-align:center;padding:16px 0;background:var(--bg3);border-radius:var(--radius);margin-bottom:16px;font-size:48px;">${p.emoji}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <span class="badge badge-purple">${p.cat}</span>
+      <span class="badge badge-cyan">${p.brand}</span>
+      ${p.outOfStock ? '<span class="badge badge-red">OUT OF STOCK</span>' : p.lowStock || p.qty <= p.min ? '<span class="badge badge-amber">LOW STOCK</span>' : '<span class="badge badge-green">IN STOCK</span>'}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--accent3)">${etb(p.sell)}</div><div class="stat-pill-lbl">Selling Price</div></div>
+      <div class="stat-pill"><div class="stat-pill-val">${etb(p.buy)}</div><div class="stat-pill-lbl">Purchase Price</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--green)">${margin}%</div><div class="stat-pill-lbl">Margin</div></div>
+      <div class="stat-pill"><div class="stat-pill-val">${p.qty}</div><div class="stat-pill-lbl">Qty in Stock</div></div>
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--radius);padding:12px;margin-bottom:12px;font-size:12px;line-height:1.8;">
+      <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3)">SKU</span><span style="font-family:var(--mono);font-size:11px;">${p.sku}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3)">Supplier</span><span>${p.supplier}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3)">Warranty</span><span>${p.warranty}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:var(--text3)">Min Stock Level</span><span>${p.min} units</span></div>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6;">${p.desc}</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <button class="btn btn-outline" style="font-size:11px;height:38px;" onclick="adjustStock(${p.id})">📦 Stock</button>
+      <button class="btn btn-outline" style="font-size:11px;height:38px;" onclick="addToCartFromDrawer(${p.id})">🛒 Add to Cart</button>
+      <button class="btn btn-danger" style="font-size:11px;height:38px;" onclick="archiveProduct(${p.id})">🗂️ Archive</button>
+    </div>`;
+  openDrawer('product-drawer');
+}
+
+function adjustStock(id) {
+  const p = state.products.find(x => x.id === id);
+  const amt = prompt(`Adjust stock for ${p.name}\nCurrent: ${p.qty}\nEnter +/- amount (e.g. +10 or -3):`);
+  if(amt !== null && !isNaN(parseInt(amt))) {
+    const change = parseInt(amt);
+    if(p.qty + change < 0) { showToast('❌ Stock cannot go negative','error'); return; }
+    p.qty += change;
+    p.outOfStock = p.qty === 0;
+    p.lowStock = p.qty > 0 && p.qty <= p.min;
+    state.auditLog.unshift({user:'You',action:`Adjusted stock: ${p.name} ${change>0?'+':''}${change}`,time:'Just now',type:'stock'});
+    showToast(`✅ Stock updated: ${p.name} → ${p.qty} units`,'success');
+    closeDrawer('product-drawer');
+    renderProducts();
+  }
+}
+
+function archiveProduct(id) {
+  if(confirm('Archive this product? It will be hidden from active inventory.')) {
+    state.products = state.products.filter(x => x.id !== id);
+    filteredProducts = filteredProducts.filter(x => x.id !== id);
+    closeDrawer('product-drawer');
+    renderProducts();
+    showToast('🗂️ Product archived','success');
+  }
+}
+
+function addToCartFromDrawer(id) {
+  closeDrawer('product-drawer');
+  showPage('sales');
+  const p = state.products.find(x => x.id === id);
+  addToCart(p);
+}
+
+function openAddProduct() { openDrawer('add-product-drawer'); }
+
+function saveProduct() {
+  const name = document.getElementById('new-name').value.trim();
+  const brand = document.getElementById('new-brand').value.trim();
+  if(!name || !brand) { showToast('❌ Name and brand are required','error'); return; }
+  const newP = {
+    id: Date.now(),
+    name, brand,
+    cat: document.getElementById('new-cat').value,
+    emoji: getCatEmoji(document.getElementById('new-cat').value),
+    sku: document.getElementById('new-sku').value || 'SKU-'+Date.now(),
+    buy: parseFloat(document.getElementById('new-buy').value) || 0,
+    sell: parseFloat(document.getElementById('new-sell').value) || 0,
+    qty: parseInt(document.getElementById('new-qty').value) || 0,
+    min: parseInt(document.getElementById('new-min').value) || 5,
+    warranty: document.getElementById('new-warranty').value || 'N/A',
+    supplier: document.getElementById('new-supplier').value,
+    desc: document.getElementById('new-desc').value,
+    status: 'active', serials: [],
+  };
+  newP.outOfStock = newP.qty === 0;
+  newP.lowStock = newP.qty > 0 && newP.qty <= newP.min;
+  state.products.unshift(newP);
+  filteredProducts = [...state.products];
+  closeDrawer('add-product-drawer');
+  renderProducts();
+  showToast('✅ Product added successfully','success');
+  state.auditLog.unshift({user:'You',action:`Added product: ${newP.name}`,time:'Just now',type:'product'});
+}
+
+function getCatEmoji(cat) {
+  const map = {'Smartphones':'📱','Laptops':'💻','Tablets':'📲','Accessories':'🎧','Chargers':'🔌','Power Banks':'🔋','Smart Watches':'⌚','Networking':'📡','Gaming':'🎮','Headphones':'🎧'};
+  return map[cat] || '📦';
+}
+
+// ─── POS / SALES ──────────────────────────────────────────────────────────────
+function renderPOS() {
+  const quickAdd = document.getElementById('pos-quick-add');
+  quickAdd.innerHTML = state.products.filter(p=>!p.outOfStock).slice(0,8).map(p =>
+    `<div class="chip" onclick="addToCart(state.products.find(x=>x.id===${p.id}))" style="cursor:pointer;">${p.emoji} ${p.name.split(' ').slice(0,2).join(' ')}</div>`
+  ).join('');
+  renderCart();
+}
+
+function filterPOS() {
+  const q = document.getElementById('pos-search').value.toLowerCase();
+  const qd = document.getElementById('pos-quick-add');
+  const results = q ? state.products.filter(p => !p.outOfStock && (p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q))) : state.products.filter(p=>!p.outOfStock).slice(0,8);
+  qd.innerHTML = results.slice(0,6).map(p =>
+    `<div class="chip" onclick="addToCart(state.products.find(x=>x.id===${p.id}))" style="cursor:pointer;">${p.emoji} ${p.name.split(' ').slice(0,2).join(' ')}</div>`
+  ).join('');
+}
+
+function addToCart(product) {
+  if(!product || product.outOfStock) { showToast('❌ Product out of stock','error'); return; }
+  const existing = state.cart.find(x => x.id === product.id);
+  if(existing) {
+    if(existing.qty >= product.qty) { showToast('❌ Not enough stock','error'); return; }
+    existing.qty++;
+  } else {
+    state.cart.push({...product, qty:1});
+  }
+  renderCart();
+  showToast(`✅ ${product.name} added`,'success');
+}
+
+function updateCartQty(id, delta) {
+  const item = state.cart.find(x => x.id === id);
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty <= 0) state.cart = state.cart.filter(x => x.id !== id);
+  renderCart();
+}
+
+function clearCart() { state.cart = []; renderCart(); }
+
+function renderCart() {
+  const el = document.getElementById('cart-items');
+  document.getElementById('cart-count').textContent = state.cart.length;
+  if(!state.cart.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">Cart is empty</div><div class="empty-sub">Search or tap a product above to add</div></div>`;
+  } else {
+    el.innerHTML = state.cart.map(item => `
+      <div class="pos-item">
+        <div style="font-size:20px;">${item.emoji}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
+          <div style="font-size:11px;color:var(--text3);">${etb(item.sell)} each</div>
+        </div>
+        <div class="pos-qty">
+          <div class="qty-btn" onclick="updateCartQty(${item.id},-1)">−</div>
+          <div class="qty-num">${item.qty}</div>
+          <div class="qty-btn" onclick="updateCartQty(${item.id},1)">+</div>
+        </div>
+        <div style="min-width:72px;text-align:right;">
+          <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--accent3);">${etb(item.sell * item.qty)}</div>
+        </div>
+      </div>`).join('');
+  }
+  updateTotals();
+}
+
+function updateTotals() {
+  const subtotal = state.cart.reduce((s,i) => s + i.sell*i.qty, 0);
+  const disc = parseFloat(document.getElementById('discount-input').value) || 0;
+  const discAmt = subtotal * disc/100;
+  const taxable = subtotal - discAmt;
+  const tax = taxable * 0.15;
+  const total = taxable + tax;
+  document.getElementById('pos-subtotal').textContent = etb(subtotal);
+  document.getElementById('pos-tax').textContent = etb(tax);
+  document.getElementById('pos-total').textContent = etb(total);
+}
+
+function selectPay(el) {
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedPayment = el.textContent.trim().replace(/^[^\s]+\s/,'');
+}
+
+function completeSale() {
+  if(!state.cart.length) { showToast('❌ Cart is empty','error'); return; }
+  const subtotal = state.cart.reduce((s,i) => s + i.sell*i.qty, 0);
+  const disc = parseFloat(document.getElementById('discount-input').value) || 0;
+  const discAmt = subtotal * disc/100;
+  const taxable = subtotal - discAmt;
+  const tax = taxable * 0.15;
+  const total = Math.round(taxable + tax);
+  const invId = 'INV-2026-0' + state.invoiceCounter++;
+
+  // Update stock
+  state.cart.forEach(item => {
+    const p = state.products.find(x => x.id === item.id);
+    if(p) {
+      p.qty -= item.qty;
+      p.outOfStock = p.qty <= 0;
+      p.lowStock = p.qty > 0 && p.qty <= p.min;
+    }
+  });
+
+  // Log sale
+  const saleItems = [...state.cart];
+  state.salesHistory.unshift({id:invId,date:'2026-06-04',customer:'Walk-in Customer',total,items:saleItems.length,method:state.selectedPayment});
+  state.auditLog.unshift({user:'You',action:`Completed Sale ${invId} · ${etb(total)}`,time:'Just now',type:'sale'});
+  state.notifications.unshift({id:Date.now(),type:'success',icon:'✅',title:'Sale Completed',msg:`${invId} · ${etb(total)}`,time:'Just now',read:false});
+  document.getElementById('notif-badge').textContent = state.notifications.filter(n=>!n.read).length;
+
+  showInvoice(invId, saleItems, subtotal, discAmt, tax, total);
+  state.cart = [];
+  renderCart();
+  renderProducts();
+}
+
+function holdSale() {
+  if(!state.cart.length) { showToast('❌ Cart is empty','error'); return; }
+  showToast('⏸ Sale held — can be resumed later','success');
+}
+
+function showInvoice(invId, items, subtotal, disc, tax, total) {
+  document.getElementById('invoice-body').innerHTML = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:40px;margin-bottom:8px;">✅</div>
+      <h2 style="font-size:20px;font-weight:800;">Sale Complete!</h2>
+      <p style="color:var(--text3);font-size:12px;margin-top:4px;">${invId}</p>
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--radius);padding:14px;margin-bottom:16px;font-size:12px;">
+      <div style="font-weight:700;margin-bottom:10px;font-size:13px;">Invoice: ${invId}</div>
+      ${items.map(i=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span>${i.name} ×${i.qty}</span><span style="font-family:var(--mono);">${etb(i.sell*i.qty)}</span></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;padding:6px 0;color:var(--text3);"><span>Subtotal</span><span>${etb(subtotal)}</span></div>
+      ${disc>0?`<div style="display:flex;justify-content:space-between;padding:4px 0;color:var(--red);"><span>Discount</span><span>−${etb(disc)}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;padding:4px 0;color:var(--text3);"><span>VAT (15%)</span><span>${etb(tax)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0 0;font-size:15px;font-weight:800;border-top:1px solid var(--border);margin-top:4px;"><span>Total</span><span style="color:var(--accent3);font-family:var(--mono);">${etb(total)}</span></div>
+    </div>
+    <div style="background:var(--bg3);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:12px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="color:var(--text3);">Payment Method</span>
+      <span style="font-weight:700;">${state.selectedPayment}</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline btn-full" onclick="showToast('📄 Receipt sent to Telegram','success');closeDrawer('invoice-modal')">📤 Share</button>
+      <button class="btn btn-primary btn-full" onclick="closeDrawer('invoice-modal')">✓ Done</button>
+    </div>`;
+  openDrawer('invoice-modal');
+}
+
+// ─── SALES HISTORY ───────────────────────────────────────────────────────────
+function showSalesHistory() {
+  document.getElementById('section-title').textContent = 'Sales History';
+  document.getElementById('section-body').innerHTML = `
+    <div class="search-wrap" style="margin-bottom:12px;">
+      <span class="search-icon">🔍</span>
+      <input type="text" placeholder="Search invoices..." style="flex:1;background:none;border:none;outline:none;color:var(--text);font-size:13px;">
+    </div>
+    ${state.salesHistory.map(s => `
+    <div class="list-item" style="padding:12px 0;border-bottom:1px solid var(--border);">
+      <div class="list-avatar" style="background:rgba(16,185,129,0.1);">🧾</div>
+      <div class="list-info">
+        <div class="list-title">${s.id}</div>
+        <div class="list-sub">${s.customer} · ${s.items} item${s.items>1?'s':''} · ${s.date}</div>
+      </div>
+      <div class="list-right">
+        <div class="list-value" style="font-size:12px;">${etb(s.total)}</div>
+        <span class="badge badge-green" style="font-size:9px;">${s.method}</span>
+      </div>
+    </div>`).join('')}`;
+  openDrawer('section-drawer');
+}
+
+// ─── REPORTS ─────────────────────────────────────────────────────────────────
+const reportData = {
+  daily: { revenue:'ETB 24,500', expense:'ETB 8,200', profit:'ETB 16,300', period:'Today · June 4, 2026', data:[[4200,6800,3200,5100,2800,1900,500],[1200,800,1100,900,700,600,100]], labels:['8am','10am','12pm','2pm','4pm','6pm','8pm'] },
+  weekly: { revenue:'ETB 374,000', expense:'ETB 124,000', profit:'ETB 250,000', period:'This Week · May 29 – Jun 4', data:[[42000,38000,55000,61000,48000,72000,58000],[12000,10000,18000,20000,15000,22000,14000]], labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] },
+  monthly: { revenue:'ETB 1.24M', expense:'ETB 432K', profit:'ETB 808K', period:'This Month · June 2026', data:[[38000,45000,52000,39000,61000,48000,70000],[11000,14000,16000,12000,18000,15000,21000]], labels:['Wk1','Wk2','Wk3','Wk4','Wk5','Wk6','Wk7'] },
+  yearly: { revenue:'ETB 12.8M', expense:'ETB 4.2M', profit:'ETB 8.6M', period:'This Year · 2026', data:[[820000,950000,1100000,880000,1200000,1050000,900000],[250000,290000,340000,270000,380000,330000,280000]], labels:['Jan','Feb','Mar','Apr','May','Jun','Jul'] },
+};
+
+function switchReport(el, period) {
+  document.querySelectorAll('.report-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const d = reportData[period];
+  document.getElementById('rep-revenue').textContent = d.revenue;
+  document.getElementById('rep-expense').textContent = d.expense;
+  document.getElementById('rep-profit').textContent = d.profit;
+  document.getElementById('rep-period').textContent = d.period;
+  if(repChart) {
+    repChart.data.labels = d.labels;
+    repChart.data.datasets[0].data = d.data[0];
+    repChart.data.datasets[1].data = d.data[1];
+    repChart.update();
+  }
+}
+
+function renderReports() {
+  const expData = [
+    {cat:'Salary',amount:180000,pct:50,color:'#6c63ff'},
+    {cat:'Rent',amount:25000,pct:7,color:'#10b981'},
+    {cat:'Marketing',amount:15000,pct:4,color:'#f59e0b'},
+    {cat:'Utilities',amount:8500,pct:2,color:'#06b6d4'},
+    {cat:'Transportation',amount:4200,pct:1,color:'#ec4899'},
+  ];
+  document.getElementById('expense-breakdown').innerHTML = expData.map(e => `
+    <div class="progress-wrap">
+      <div class="progress-info">
+        <span style="font-size:12px;font-weight:600;">${e.cat}</span>
+        <span style="font-size:12px;font-family:var(--mono);">${etb(e.amount)}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${e.pct*10}%;background:${e.color};"></div></div>
+    </div>`).join('');
+}
+
+// ─── SECTION DRAWERS ─────────────────────────────────────────────────────────
+function openSection(sec) {
+  const titles = {customers:'Customers',suppliers:'Suppliers',purchases:'Purchase Orders',expenses:'Expense Management',stock:'Stock Management',branches:'Branches',warranty:'Warranty Claims',returns:'Returns & Refunds',audit:'Audit Logs',ai:'AI Insights',settings:'Settings'};
+  document.getElementById('section-title').textContent = titles[sec] || sec;
+  document.getElementById('section-body').innerHTML = buildSection(sec);
+  openDrawer('section-drawer');
+}
+
+function buildSection(sec) {
+  switch(sec) {
+    case 'customers': return `
+      <button class="btn btn-primary btn-full" style="margin-bottom:12px;" onclick="addCustomer()">+ Add Customer</button>
+      ${state.customers.map(c => `
+        <div class="list-item" style="padding:12px 0;border-bottom:1px solid var(--border);" onclick="viewCustomer(${c.id})">
+          <div class="list-avatar" style="background:rgba(108,99,255,0.12);font-size:18px;">👤</div>
+          <div class="list-info">
+            <div class="list-title">${c.name}</div>
+            <div class="list-sub">${c.phone} · ${c.purchases} purchases</div>
+          </div>
+          <div class="list-right">
+            <div style="font-size:12px;font-family:var(--mono);">${etb(c.totalSpent)}</div>
+            <span class="badge ${c.tier==='VIP'?'badge-amber':'badge-cyan'}" style="font-size:9px;">${c.tier}</span>
+          </div>
+        </div>`).join('')}`;
+
+    case 'suppliers': return `
+      <button class="btn btn-primary btn-full" style="margin-bottom:12px;" onclick="showToast('Add supplier form coming soon','')">+ Add Supplier</button>
+      ${state.suppliers.map(s => `
+        <div class="list-item" style="padding:12px 0;border-bottom:1px solid var(--border);">
+          <div class="list-avatar" style="background:rgba(16,185,129,0.12);">🏭</div>
+          <div class="list-info">
+            <div class="list-title">${s.name}</div>
+            <div class="list-sub">${s.contact} · ${s.products} products</div>
+          </div>
+          <div class="list-right">
+            <div style="font-size:11px;">${'⭐'.repeat(Math.round(s.rating))} ${s.rating}</div>
+            ${s.balance>0?`<span class="badge badge-red" style="font-size:9px;">Owes ${etb(s.balance)}</span>`:'<span class="badge badge-green" style="font-size:9px;">Settled</span>'}
+          </div>
+        </div>`).join('')}`;
+
+    case 'expenses': return `
+      <button class="btn btn-primary btn-full" style="margin-bottom:12px;" onclick="addExpense()">+ Record Expense</button>
+      <div style="margin-bottom:16px;">
+        ${state.expenses.map(e => `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+            <div style="width:36px;height:36px;background:rgba(239,68,68,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;">💸</div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;">${e.cat}</div>
+              <div style="font-size:11px;color:var(--text3);">${e.note} · ${e.date}</div>
+            </div>
+            <div style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--red);">${etb(e.amount)}</div>
+          </div>`).join('')}
+      </div>
+      <div class="stat-row">
+        <div class="stat-pill"><div class="stat-pill-val" style="color:var(--red)">${etb(state.expenses.reduce((s,e)=>s+e.amount,0))}</div><div class="stat-pill-lbl">Total This Month</div></div>
+      </div>`;
+
+    case 'stock': return `
+      <div style="margin-bottom:16px;">
+        <div class="alert-banner" style="margin-bottom:12px;">
+          <div class="alert-banner-icon">⚠️</div>
+          <div class="alert-banner-text">5 products low · 1 out of stock</div>
+        </div>
+        ${state.products.filter(p=>p.lowStock||p.outOfStock).map(p=>`
+          <div style="background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+            <div style="font-size:24px;">${p.emoji}</div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;">${p.name}</div>
+              <div style="font-size:11px;color:var(--text3);">${p.outOfStock?'OUT OF STOCK':'Low: '+p.qty+' left (min '+p.min+')'}</div>
+            </div>
+            <button class="btn btn-outline" style="height:32px;font-size:11px;padding:0 10px;" onclick="adjustStock(${p.id});closeDrawer('section-drawer');">Restock</button>
+          </div>`).join('')}
+      </div>
+      <div class="sec-title" style="margin-bottom:10px;">Stock Movement Log</div>
+      ${[
+        {action:'Stock In',product:'Anker PowerCore',qty:'+50',user:'Yohannes D.',time:'2 hrs ago'},
+        {action:'Sale',product:'Galaxy S24 Ultra',qty:'-1',user:'System',time:'5 hrs ago'},
+        {action:'Adjustment',product:'iPhone 15 Pro Max',qty:'+5',user:'Abebe G.',time:'Yesterday'},
+        {action:'Damage',product:'GaN Charger 65W',qty:'-2',user:'Meron T.',time:'2 days ago'},
+      ].map(m=>`
+        <div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">
+          <span style="font-weight:600;color:${m.qty.startsWith('+')?'var(--green)':'var(--red)'};">${m.qty}</span>
+          <div style="flex:1;"><div>${m.product}</div><div style="color:var(--text3);">${m.action} · ${m.user} · ${m.time}</div></div>
+        </div>`).join('')}`;
+
+    case 'branches': return state.branches.map(b=>`
+      <div style="background:var(--bg3);border-radius:var(--radius);padding:14px;margin-bottom:10px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px;">🏪 ${b.name}</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">${b.city} · Manager: ${b.manager}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="stat-pill"><div class="stat-pill-val" style="color:var(--green)">${etb(b.sales)}</div><div class="stat-pill-lbl">Monthly Sales</div></div>
+          <div class="stat-pill"><div class="stat-pill-val">${b.stock}</div><div class="stat-pill-lbl">Stock Items</div></div>
+        </div>
+      </div>`).join('');
+
+    case 'warranty': return `
+      <div style="margin-bottom:10px;font-size:12px;color:var(--text2);">7 open warranty claims</div>
+      ${[
+        {id:'WC-001',product:'iPhone 15 Pro Max',customer:'Dawit B.',issue:'Screen flickering',status:'open',date:'2026-06-01'},
+        {id:'WC-002',product:'MacBook Pro M3',customer:'Hana G.',issue:'Battery drain',status:'processing',date:'2026-05-28'},
+        {id:'WC-003',product:'Sony WH-1000XM5',customer:'Walk-in',issue:'Right ear no audio',status:'resolved',date:'2026-05-20'},
+      ].map(w=>`
+        <div style="background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">${w.id}</span>
+            <span class="badge ${w.status==='resolved'?'badge-green':w.status==='processing'?'badge-amber':'badge-red'}">${w.status}</span>
+          </div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px;">${w.product}</div>
+          <div style="font-size:11px;color:var(--text3);">${w.customer} · ${w.issue} · ${w.date}</div>
+        </div>`).join('')}`;
+
+    case 'returns': return `
+      <div style="margin-bottom:10px;font-size:12px;color:var(--text2);">3 pending return requests</div>
+      ${[
+        {id:'RET-001',product:'Samsung Galaxy S24 Ultra',customer:'Yonas A.',reason:'Defective screen',amount:72000,status:'pending'},
+        {id:'RET-002',product:'iPad Pro 12.9"',customer:'Walk-in',reason:'Changed mind',amount:88000,status:'approved'},
+      ].map(r=>`
+        <div style="background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">${r.id}</span>
+            <span class="badge ${r.status==='approved'?'badge-green':'badge-amber'}">${r.status}</span>
+          </div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px;">${r.product}</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">${r.customer} · ${r.reason}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;font-weight:700;font-family:var(--mono);color:var(--amber);">${etb(r.amount)}</span>
+            ${r.status==='pending'?`<div style="display:flex;gap:6px;"><button class="btn btn-success" style="height:30px;font-size:11px;padding:0 10px;" onclick="showToast('Return approved','success')">Approve</button><button class="btn btn-danger" style="height:30px;font-size:11px;padding:0 10px;" onclick="showToast('Return rejected','')">Reject</button></div>`:''}
+          </div>
+        </div>`).join('')}`;
+
+    case 'audit': return state.auditLog.map(a=>`
+      <div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">
+          ${{sale:'🛍️',product:'📦',stock:'📊',purchase:'🛒',report:'📋'}[a.type]||'📝'}
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:600;">${a.action}</div>
+          <div style="font-size:10px;color:var(--text3);">${a.user} · ${a.time}</div>
+        </div>
+      </div>`).join('');
+
+    case 'ai': return `
+      <div style="text-align:center;padding:16px 0 20px;">
+        <div style="font-size:40px;margin-bottom:8px;">🤖</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">AI-Powered Business Intelligence</div>
+        <p style="font-size:12px;color:var(--text3);">Forecasting & predictive analytics</p>
+      </div>
+      ${[
+        {icon:'📈',title:'Sales Forecast (Next 7 Days)',val:'ETB 312,000',sub:'Based on 90-day trend (+8.2%)',color:'var(--green)'},
+        {icon:'📦',title:'Inventory Prediction',val:'12 items',sub:'Expected to go low in 14 days',color:'var(--amber)'},
+        {icon:'🔥',title:'Top Predicted Demand',val:'Galaxy S24 Ultra',sub:'+34% demand surge next week',color:'var(--accent3)'},
+        {icon:'💰',title:'Profit Trend',val:'+12.5%',sub:'Projected for next month',color:'var(--cyan)'},
+      ].map(i=>`
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+          <div style="font-size:24px;">${i.icon}</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:3px;">${i.title}</div>
+            <div style="font-size:14px;font-weight:800;font-family:var(--mono);color:${i.color};">${i.val}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${i.sub}</div>
+          </div>
+        </div>`).join('')}
+      <button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="showToast('📊 Full AI report generating...','success')">Generate Full AI Report</button>`;
+
+    case 'settings': return `
+      <div class="list-card" style="margin-bottom:12px;">
+        ${[
+          {icon:'🏪',label:'Store Information',sub:'Name, address, contact'},
+          {icon:'💱',label:'Currency & Tax',sub:'ETB · VAT 15%'},
+          {icon:'👥',label:'User Management',sub:'Roles & permissions'},
+          {icon:'🔔',label:'Notification Rules',sub:'Alerts & thresholds'},
+          {icon:'🏦',label:'Payment Methods',sub:'Configure methods'},
+          {icon:'🔗',label:'Telegram Bot',sub:'Bot token & webhook'},
+          {icon:'💾',label:'Backup & Recovery',sub:'Auto backup daily'},
+          {icon:'🌐',label:'Language',sub:'English / አማርኛ'},
+        ].map(s=>`
+          <div class="list-item">
+            <div class="list-avatar" style="background:var(--bg4);font-size:18px;">${s.icon}</div>
+            <div class="list-info"><div class="list-title">${s.label}</div><div class="list-sub">${s.sub}</div></div>
+            <div style="color:var(--text3)">›</div>
+          </div>`).join('')}
+      </div>
+      <button class="btn btn-outline btn-full" onclick="showToast('Settings saved','success')">💾 Save Settings</button>`;
+
+    case 'purchases': return `
+      <button class="btn btn-primary btn-full" style="margin-bottom:12px;" onclick="showToast('Create purchase order form coming soon','')">+ New Purchase Order</button>
+      ${[
+        {id:'PO-2026-089',supplier:'TechTrade Ethiopia',items:5,total:280000,status:'received',date:'2026-06-03'},
+        {id:'PO-2026-088',supplier:'Global Gadgets PLC',items:3,total:450000,status:'pending',date:'2026-06-01'},
+        {id:'PO-2026-087',supplier:'Addis Electronics',items:8,total:180000,status:'received',date:'2026-05-30'},
+        {id:'PO-2026-086',supplier:'DigiMart Ethiopia',items:2,total:95000,status:'cancelled',date:'2026-05-28'},
+      ].map(po=>`
+        <div style="background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+            <span style="font-size:11px;font-family:var(--mono);color:var(--text3);">${po.id}</span>
+            <span class="badge ${po.status==='received'?'badge-green':po.status==='pending'?'badge-amber':'badge-red'}">${po.status}</span>
+          </div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px;">${po.supplier}</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);">
+            <span>${po.items} items · ${po.date}</span>
+            <span style="font-family:var(--mono);color:var(--text);font-weight:700;">${etb(po.total)}</span>
+          </div>
+        </div>`).join('')}`;
+
+    default: return `<div class="empty-state"><div class="empty-icon">🚧</div><div class="empty-title">Coming Soon</div><div class="empty-sub">This section is under development</div></div>`;
+  }
+}
+
+// ─── CUSTOMERS ────────────────────────────────────────────────────────────────
+function addCustomer() {
+  const name = prompt('Customer full name:');
+  if(!name) return;
+  const phone = prompt('Phone number:');
+  state.customers.push({id:Date.now(),name,phone:phone||'N/A',balance:0,tier:'Regular',purchases:0,totalSpent:0});
+  showToast('✅ Customer added','success');
+  openSection('customers');
+}
+
+function viewCustomer(id) {
+  const c = state.customers.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('section-title').textContent = c.name;
+  document.getElementById('section-body').innerHTML = `
+    <div style="text-align:center;padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:16px;">
+      <div style="width:64px;height:64px;border-radius:50%;background:rgba(108,99,255,0.15);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 10px;">👤</div>
+      <div style="font-size:18px;font-weight:700;">${c.name}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;">${c.phone}</div>
+      <div style="margin-top:8px;"><span class="badge ${c.tier==='VIP'?'badge-amber':'badge-cyan'}">${c.tier} Customer</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <div class="stat-pill"><div class="stat-pill-val">${c.purchases}</div><div class="stat-pill-lbl">Purchases</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:var(--green);font-size:12px;">${etb(c.totalSpent)}</div><div class="stat-pill-lbl">Total Spent</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="color:${c.balance>0?'var(--red)':'var(--green)'}">${etb(c.balance)}</div><div class="stat-pill-lbl">Balance</div></div>
+      <div class="stat-pill"><div class="stat-pill-val" style="font-size:12px;">${c.tier==='VIP'?'⭐ VIP':'Regular'}</div><div class="stat-pill-lbl">Tier</div></div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="showToast('Opening customer POS...','success')">🛍️ Create New Sale</button>`;
+}
+
+function addExpense() {
+  document.getElementById('section-title').textContent = 'Record Expense';
+  document.getElementById('section-body').innerHTML = `
+    <div class="form-group"><label class="form-label">Category</label>
+    <select class="form-select" id="exp-cat"><option>Rent</option><option>Utilities</option><option>Salary</option><option>Transportation</option><option>Maintenance</option><option>Marketing</option><option>Miscellaneous</option></select></div>
+    <div class="form-group"><label class="form-label">Amount (ETB)</label><input class="form-input" id="exp-amt" type="number" placeholder="0.00"></div>
+    <div class="form-group"><label class="form-label">Note</label><textarea class="form-textarea" id="exp-note" placeholder="Expense description..."></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="saveExpense()">💾 Save Expense</button>`;
+}
+
+function saveExpense() {
+  const cat = document.getElementById('exp-cat').value;
+  const amt = parseFloat(document.getElementById('exp-amt').value);
+  const note = document.getElementById('exp-note').value;
+  if(!amt) { showToast('❌ Enter an amount','error'); return; }
+  state.expenses.unshift({id:Date.now(),cat,amount:amt,date:'2026-06-04',note});
+  showToast('✅ Expense recorded','success');
+  closeDrawer('section-drawer');
+  state.auditLog.unshift({user:'You',action:`Recorded expense: ${cat} · ${etb(amt)}`,time:'Just now',type:'expense'});
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+function openNotifications() {
+  const list = document.getElementById('notif-list');
+  list.innerHTML = state.notifications.map(n => `
+    <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);opacity:${n.read?0.5:1};">
+      <div style="font-size:24px;">${n.icon}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:${n.read?400:700};">${n.title}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px;">${n.msg}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;">${n.time}</div>
+      </div>
+      ${!n.read?`<div style="width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:4px;flex-shrink:0;"></div>`:''}
+    </div>`).join('');
+  openDrawer('notif-drawer');
+}
+
+function markAllRead() {
+  state.notifications.forEach(n => n.read = true);
+  document.getElementById('notif-badge').textContent = '0';
+  openNotifications();
+  showToast('All notifications marked as read','success');
+}
+
+// ─── PROFILE ─────────────────────────────────────────────────────────────────
+function openProfile() { openDrawer('profile-drawer'); }
+
+function logout() {
+  closeDrawer('profile-drawer');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('onboarding').style.display = 'flex';
+  state.cart = [];
+  showToast('Signed out successfully','success');
+}
+
+// ─── DRAWER HELPERS ───────────────────────────────────────────────────────────
+function openDrawer(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' '+type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 2500);
+}
+
+// ─── EDIT PRODUCT STUB ───────────────────────────────────────────────────────
+function editProduct() {
+  const p = state.currentProduct;
+  if(!p) return;
+  closeDrawer('product-drawer');
+  document.getElementById('add-product-drawer').querySelector('h2').textContent = 'Edit Product';
+  document.getElementById('new-name').value = p.name;
+  document.getElementById('new-brand').value = p.brand;
+  document.getElementById('new-buy').value = p.buy;
+  document.getElementById('new-sell').value = p.sell;
+  document.getElementById('new-qty').value = p.qty;
+  document.getElementById('new-min').value = p.min;
+  document.getElementById('new-sku').value = p.sku;
+  document.getElementById('new-warranty').value = p.warranty;
+  document.getElementById('new-desc').value = p.desc;
+  openDrawer('add-product-drawer');
+}
+</script>
+</body>
+</html>
